@@ -22,7 +22,7 @@ import springsecurity.service.exception.RegistrationPhoneNumberAlreadyExist;
 
 @AllArgsConstructor
 @Service
-public class RegisterCustomerServiceImpl implements RegisterCustomerService {
+public class RegisterCustomerServiceImpl implements RegisterCustomerService, UserDetailsService {
 
 	@Autowired
 	private PasswordEncoder encoder;
@@ -64,5 +64,15 @@ public class RegisterCustomerServiceImpl implements RegisterCustomerService {
 	private Customer dtoToDomain(RegisterCustomerRequestModel dto) {
 		return Customer.builder().email(dto.getEmail()).firstName(dto.getFirstName()).lastName(dto.getLastName())
 				.phoneNumber(dto.getPhoneNumber()).password(encoder.encode(dto.getPassword())).role(Role.USER).build();
+	}
+
+	@Override
+	public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+		Customer customer = customerRegisterGateway.findByEmail(email);
+		
+		User user = new User(customer.getEmail(), customer.getPassword(),
+				Collections.singletonList(new SimpleGrantedAuthority(customer.getRole().name())));
+		
+		return user;
 	}
 }
